@@ -1,0 +1,25 @@
+header, main, .top {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+fieldset input {
+  display: block;
+}
+
+dd {
+  margin-left: 0;
+}
+
+dt {
+  font-weight: bold;
+}
+
+h1 {
+  margin: 0 auto;
+}
+
+#tag-bar {
+  margin: 25px;
+}

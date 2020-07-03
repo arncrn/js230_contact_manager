@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="/stylesheets/manager.css" />
+  <script src="/javascripts/jquery.js"></script>
+  <script src="/javascripts/handlebars.js"></script>
+  <script src="/javascripts/manager.js"></script>
+</head>
+<body>
+
+  <section>
+  <!-- <header>
+  </header> -->
+
+  <main>
+  </main>
+  </section>
+
+</body>
+</html>
+
+
+
+<!-- template for main skeleton -->
+<script id="skeleton" type="text/x-handlebars">
+<header>
+    <div>
+    <input class="add" type="button" value="Add Contact"/>
+    <input type="search" name="search" placeholder="search">
+    <div id="tag-bar"></div>
+  </div>
+</header>
+
+<main>
+</main>
+</script>
+
+<!-- template for tags -->
+<script id="tagTemplate" type="text/x-handlebars">
+{{#each tag}}
+  <label>
+    {{tagName}}
+    <input type="checkbox" value="{{tagName}}" name="filter-tag" />
+  </label>
+{{/each}}
+</script>
+
+
+
+
+<!-- template for contacts -->
+<script id="contactTemplate" type="text/x-handlebars">
+  {{#if contact}}
+  {{#each contact}}
+  <div class="id_finder">
+    <h1>{{full_name}}</h1>
+    <input type="hidden" name="contact_id_{{id}}" value="{{id}}" />
+    <dl>
+      <dt>Phone Number:</dt>
+      <dd>{{phone_number}}</dd>
+
+      <dt>Email:</dt>
+      <dd>{{email}}</dd>
+    </dl>
+    <input type="button" value="edit" />
+    <input type="button" value="delete" />
+  </div>
+  {{/each}}
+  {{else}}
+  <div>
+    <p>There are no contacts</p>
+    <input class="add" type="button" value="Add Contact"/>
+  </div>
+  {{/if}}
+</script>
+
+<!-- Template for create contact -->
+<script id="createContact" type="text/x-handlebars">
+  <div class="top">
+    <h1>Create</h1>
+  </div>
+  <main>
+    <form method="POST" action="" class="createNew" >
+      <fieldset>
+        <label for="full_name">Name</label>
+        <input type="text" id="full_name" name="full_name" value="" required />
+        <label for="phone_number">Phone</label>
+        <input type="tel" id="phone_number" name="phone_number" value=""/>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="" />
+        <label for="tags">Tags</label>
+        <input type="text" id="tags" name="tags" value="" />
+        <input type="submit" value="Submit" />
+        <input type="button" value="Cancel" />
+      </fieldset>
+    </form>
+  </main>
+</script>
+
+<!-- Template for edit contact -->
+
+<script id="editContact" type="text/x-handlebars">
+  <div class="top">
+    <h1>Edit</h1>
+  </div>
+  <main class="id_finder">
+    <input type="hidden" name="contact_id_{{id}}" value="{{id}}" />
+    <form method="POST" action="" class="edit">
+      <fieldset>
+        <label for="full_name">Name</label>
+        <input type="text" id="full_name" name="full_name" value="{{full_name}}" required />
+        <label for="phone_number">Phone</label>
+        <input type="tel" id="phone_number" name="phone_number" value="{{phone_number}}" />
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{email}}" />
+        <label for="tags">Tags</label>
+        <input type="text" id="tags" name="tags" value="{{tags}}" />
+        <input type="submit" value="Submit" />
+        <input type="button" value="Cancel" />
+      </fieldset>
+    </form>
+  </main>
+</script>

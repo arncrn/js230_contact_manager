@@ -1,0 +1,28 @@
+[{
+    "full_name": "Aaron Crane",
+    "phone_number": "123456",
+    "email": "myEmail@me.com",
+    "tags": "me, myself",
+    "id": 1
+  },
+  {
+    "full_name": "Nastia",
+    "phone_number": "98471",
+    "email": "nastya@dmail.com",
+    "tags": "wife",
+    "id": 2
+  },
+  {
+    "full_name": "Josh",
+    "phone_number": "387492",
+    "email": "josh@email.com",
+    "tags": "brother",
+    "id": 3
+  },
+  {
+    "full_name": "Derrick",
+    "phone_number": "08",
+    "email": "d@man.co",
+    "tags": "brother",
+    "id": 4
+  }]
