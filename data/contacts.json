@@ -1,4 +1,5 @@
-[{
+[
+  {
     "full_name": "Aaron Crane",
     "phone_number": "123456",
     "email": "myEmail@me.com",
@@ -6,14 +7,7 @@
     "id": 1
   },
   {
-    "full_name": "Nastia",
-    "phone_number": "98471",
-    "email": "nastya@dmail.com",
-    "tags": "wife",
-    "id": 2
-  },
-  {
-    "full_name": "Josh",
+    "full_name": "Joshy",
     "phone_number": "387492",
     "email": "josh@email.com",
     "tags": "brother",
@@ -25,4 +19,26 @@
     "email": "d@man.co",
     "tags": "brother",
     "id": 4
-  }]
+  },
+  {
+    "full_name": "mimicry",
+    "phone_number": "3848",
+    "email": "mime@mime",
+    "tags": "mime",
+    "id": 7
+  },
+  {
+    "full_name": "tester",
+    "phone_number": "2394928",
+    "email": "tester@test.com",
+    "tags": "tester",
+    "id": 8
+  },
+  {
+    "full_name": "Mimic",
+    "phone_number": "29348",
+    "email": "mime@mime",
+    "tags": "mime",
+    "id": 9
+  }
+]

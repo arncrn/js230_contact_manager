@@ -1,8 +1,190 @@
-let manager;
+let Manager;
+let API;
+let Templater;
+let Generator;
+let Throttler;
+let Filter;
+let ConvertForm;
+
+(function() {
+  Throttler = {
+    throttle: function(func, delay, context) {
+      let timeout;
+      return (...args) => {
+        if (timeout) { clearTimeout(timeout) }
+        timeout = setTimeout(() => func.apply(context, args), delay);
+      };
+    },
+  };
+})();
+
+
+(function(){
+  API = {
+    getContacts: function(url, callbacks, context) {
+      $.ajax({
+        url: url,
+        dataType: "json",
+      }).done((json, second, xhr) => {
+        callbacks.forEach(callback => {
+          callback.call(context, json);
+        });
+      });
+    },
+
+    newContact: function(url, data, callback, context) {
+      $.ajax({
+        url: url,
+        type: 'POST',
+        data: data,
+        dataType: "json",
+      }).done((json) => {
+        callback.call(context);
+      }).fail(error => {
+        console.log(error.status);
+      });
+    },
+
+    updateContact: function(url, data, callback, context) {
+      $.ajax({
+        url: url,
+        type: 'PUT',
+        data: data,
+        dataType: 'json',
+      }).done((json) => {
+        callback.call(context);
+      }).fail((xhr) => {
+        console.log(xhr.status);
+      });
+    },
+
+    delete: function(url, callback, context) {
+      $.ajax({
+        url: url,
+        type: 'DELETE',
+        dataType: 'text',
+      }).done(() => {
+        callback.call(context);
+      }).fail((xhr) => {
+        console.log(xhr.status);
+      });
+    },
+  };
+})();
 
 
 (function() {
-  manager = {
+  Templater = {
+    templates: {},
+    compile: function() {
+      let templates = $('script[type="text/x-handlebars"]');
+      let self = this;
+      $('script[type="text/x-handlebars"]').each(function() {
+        let $template = $(this);
+        self.templates[$template.attr('id')] = Handlebars.compile($template.html());
+      });
+    },
+
+    init: function() {
+      this.compile();
+      return this;
+    },
+  };
+})();
+
+(function() {
+  Generator = {
+    displayContent: function(domSection, template, content) {
+      $(domSection).html(template(content));
+    },
+
+    skeleton: function() {
+      this.displayContent('section', this.templates.skeleton);
+    },
+
+    contactCreation: function() {
+      this.templates.createContact()
+      this.displayContent('section', this.templates.createContact);
+    },
+
+    contactEditor: function(contact) {
+      this.displayContent('section', this.templates.editContact, contact);
+    },
+
+    displayContacts: function(list) {
+      this.displayContent('main', this.templates.contactTemplate, {contact: list})
+    },
+
+    displayTags: function(tags) {
+      this.displayContent('#tag-bar', this.templates.tagTemplate, {tag: tags});
+    },
+
+    mainPage: function(collection) {
+      this.displayContacts(collection);
+    },
+
+    init: function(templates) {
+      this.data;
+      this.templates = Templater.templates;
+      this.templates;
+      return this;
+    }
+  };
+})();
+
+(function() {
+  Filter = {
+    singleContact: function(event, array) {
+      let id = this.findID(event);
+      return array.find(person => person.id === id);
+    },
+
+    findID: function(event) {
+      return +$(event.target).closest('.id_finder').find('input[type=hidden]').val();
+    },
+
+    checkedValues: function() {
+      return $.grep($('input[type=checkbox]'), (checkbox) => {
+        return checkbox.checked;
+      }).map(checkbox => checkbox.value);
+    },
+
+    byChecked: function(array) {
+      let values = this.checkedValues();
+      return array.filter(contact => {
+        let found = false;
+        for (let i = 0; i < values.length; i += 1) {
+          let tags = contact.tags;
+          if (tags && tags.includes(values[i])) {
+            return true;
+          }
+        }
+        return false;
+      });
+    },
+
+    byName: function(array, text) {
+      return array.filter(contact => {
+        return contact.full_name.toLowerCase().includes(text);
+      });
+    },
+  };
+})();
+
+(function() {
+  ConvertForm = {
+    toObject: function(event, object) {
+      let formData = $(event.target).serializeArray();
+      formData.forEach(item => {
+        object[item.name] = item.value;
+      });
+    },
+  };
+})();
+
+
+(function() {
+  Manager = {
     updateTags: function() {
       let tagNames = this.getTagArray();
       let tagObjects = [];
@@ -25,220 +207,111 @@ let manager;
       }, []);
     },
 
-    getContacts: function() {
-      $.ajax({
-        url: '/api/contacts',
-        type: 'GET',
-        dataType: "json",
-      }).done((json, second, xhr) => {
-        this.collection = json;
-        console.log(xhr.status);
-        this.loadMainPage();
-      });
+    search: function() {
+      let input = $('input[type=search]').val().toLowerCase();
+      Generator.displayContacts(Filter.byName(this.collection, input));
     },
 
-    newContact: function(event) {
-      event.preventDefault();
-      let data = {};
-      this.formToObject(event, data);
-      $.ajax({
-        url: '/api/contacts',
-        type: 'POST',
-        data: data,
-        dataType: "json",
-      }).done((json, second, xhr) => {
-        // console.log(json);
-        // console.log(xhr.status);
-        this.getContacts();
-      }).fail(error => {
-        console.log(error.status);
-      });
-    },
-
-    updateContact: function(event) {
-      event.preventDefault();
-      let id = this.findID(event);
-      let contact = this.getSingleContact(id);
-      this.formToObject(event, contact);
-
-      $.ajax({
-        url: `/api/contacts/${id}`,
-        type: 'PUT',
-        data: contact,
-        dataType: 'json',
-      }).done((json, second, xhr) => {
-        console.log(xhr.status);
-        console.log(json);
-        this.getContacts();
-      }).fail((xhr) => {
-        console.log(xhr.status);
-      });
-    },
-
-    delete: function(event) {
-      let id = this.findID(event);
-      $.ajax({
-        url: `/api/contacts/${id}`,
-        type: 'DELETE',
-        dataType: 'text',
-      }).done(() => {
-        this.getContacts();
-      }).fail((xhr) => {
-        console.log(xhr.status);
-      });
-    },
-
-    displayContent: function(domSection, template, content) {
-      $(domSection).html(template(content));
-    },
-
-    generateSkeleton: function() {
-      this.displayContent('section', this.templates.skeleton);
-    },
-
-    createAddPage: function() {
-      this.templates.createContact()
-      this.displayContent('section', this.templates.createContact);
-    },
-
-    loadEditPage: function(event) {
-      let id = this.findID(event);
-      let contact = this.getSingleContact(id);
-      this.displayContent('section', this.templates.editContact, contact);
-    },
-
-    displayContacts: function(list, template = '#contactTemplate') {
-      template = '#contactTemplate';
-      this.displayContent('main', this.templates.contactTemplate, {contact: list})
-    },
-
-    getSingleContact: function(id) {
-      return this.collection.find(person => person.id === id);
-    },
-
-    formToObject: function(event, object) {
-      let formData = $(event.target).serializeArray();
-      formData.forEach(item => {
-        object[item.name] = item.value;
-      });
-    },
-
-    loadMainPage: function() {
-      this.generateSkeleton();
-      this.generateMainPage();
-    },
-
-    generateMainPage: function() {
-      this.updateTags();
-      this.displayContacts(this.collection);
-      this.displayContent('#tag-bar', this.templates.tagTemplate, {tag: this.tags})
-    },
-
-    findID: function(event) {
-      return +$(event.target).closest('.id_finder').find('input[type=hidden]').val();
-    },
-
-    getCheckedValues: function() {
-      return $.grep($('input[type=checkbox]'), (checkbox) => {
-        return checkbox.checked;
-      }).map(checkbox => checkbox.value);
-    },
-
-    filterChecked: function(values) {
-      return this.collection.filter(contact => {
-        let found = false;
-        for (let i = 0; i < values.length; i += 1) {
-          let tags = contact.tags;
-          if (tags && tags.includes(values[i])) {
-            return true;
-          }
-        }
-        return false;
-      });
+    // ******PAGE MANAGEMENT
+    updateCollection: function(jsonData) {
+      this.collection = jsonData;
     },
 
     displayFilteredTags: function() {
-      let checkValues = this.getCheckedValues();
+      let checkValues = Filter.checkedValues();
       if (checkValues.length === 0) {
-        this.displayContacts(this.collection);
+        Generator.displayContacts(this.collection);
       } else {
-        this.displayContacts(this.filterChecked(checkValues));
+        Generator.displayContacts(Filter.byChecked(this.collection));
       }
     },
 
-    searchFilter: function() {
-      let input = $('input[type=search]').val().toLowerCase();
-      this.displayContacts(this.filterByName(input));
+    editPage: function(event) {
+      let contact = Filter.singleContact(event, this.collection);
+      Generator.contactEditor(contact);
     },
 
-    filterByName: function(text) {
-      return this.collection.filter(contact => {
-        return contact.full_name.toLowerCase().includes(text);
-      });
+    loadMainPage: function() {
+      this.updateTags();
+      Generator.skeleton();
+      Generator.mainPage(this.collection);
+      Generator.displayTags(this.tags);
     },
 
-    debounce: function(func, delay) {
-      let timeout;
-      return (...args) => {
-        if (timeout) { clearTimeout(timeout) }
-        timeout = setTimeout(() => func.apply(null, args), delay);
-      };
+    loadCreationPage: function() {
+      Generator.contactCreation();
     },
 
-    compileTemplates: function() {
-      let templates = $('script[type="text/x-handlebars"]');
-      let self = this;
-      $('script[type="text/x-handlebars"]').each(function() {
-        let $template = $(this);
-        self.templates[$template.attr('id')] = Handlebars.compile($template.html());
-      });
+    createNewContact: function(event) {
+      event.preventDefault();
+      let data = {};
+      ConvertForm.toObject(event, data);
+      this.api.newContact('/api/contacts', data, this.updatePage, this);
+    },
+
+    updatePage: function() {
+      this.api.getContacts('/api/contacts',
+                          [this.updateCollection, this.loadMainPage],
+                          this);
+    },
+
+    updateContact(event) {
+      event.preventDefault();
+      let id = Filter.findID(event);
+      let contact = Filter.singleContact(event, this.collection);
+      ConvertForm.toObject(event, contact);
+      this.api.updateContact(`/api/contacts/${id}`, contact, this.updatePage, this);
+    },
+
+    delete: function(event) {
+      let id = Filter.findID(event);
+      this.api.delete(`/api/contacts/${id}`, this.updatePage, this);
     },
 
     init: function() {
       this.tags;
       this.collection;
-      this.templates = {};
-      this.searchFilter = this.debounce(this.searchFilter.bind(this), 300);
-      this.compileTemplates();
-      this.getContacts();
+      this.search = Throttler.throttle(this.search, 300, this);
+      this.api = API;
+      this.updatePage();
     },
   };
 })();
 
 $(() => {
   $(document.body).on('click', '[value=delete]', event => {
-    manager.delete(event);
+    Manager.delete(event);
   });
 
   $(document.body).on('change', 'input[type=checkbox]', event => {
-    manager.displayFilteredTags()
+    Manager.displayFilteredTags()
   });
 
   $(document.body).on('input', 'input[type=search]', event => {
-    manager.searchFilter();
+    Manager.search();
   });
 
   $(document.body).on('click', '.add', event => {
-    manager.createAddPage()
+    Manager.loadCreationPage()
   });
 
   $(document.body).on('click', 'input[value=Cancel]', event => {
-    manager.loadMainPage();
+    Manager.loadMainPage();
   });
 
   $(document.body).on('submit', 'form.createNew', event => {
-    manager.newContact(event);
+    Manager.createNewContact(event);
   });
 
   $(document.body).on('submit', 'form.edit', event => {
-    manager.updateContact(event);
+    Manager.updateContact(event);
   });
 
   $(document.body).on('click', 'input[value=edit]', event => {
-    manager.loadEditPage(event);
+    Manager.editPage(event);
   });
 });
 
-$(manager.init.bind(manager));
-
-
+$(Manager.init.bind(Manager));
+$(Templater.init.bind(Templater));
+$(Generator.init.bind(Generator));
